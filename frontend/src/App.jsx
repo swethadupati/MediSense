@@ -1,122 +1,181 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+
+import { useEffect, useState } from "react";
+import api from "./services/api";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [backend, setBackend] = useState(null);
+  const [aiService, setAiService] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const checkConnections = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const [backendResult, aiResult] =
+        await Promise.allSettled([
+          api.get("/health"),
+          fetch("/ai/health")
+            .then(async (response) => {
+              if (!response.ok) {
+                throw new Error("AI service unavailable");
+              }
+              return response.json();
+            })
+        ]);
+
+      if (backendResult.status === "fulfilled") {
+        setBackend(backendResult.value.data);
+      } else {
+        setBackend(null);
+      }
+
+      if (aiResult.status === "fulfilled") {
+        setAiService(aiResult.value);
+      } else {
+        setAiService(null);
+      }
+
+      if (
+        backendResult.status === "rejected" ||
+        aiResult.status === "rejected"
+      ) {
+        setError(
+          "One or more services are unavailable. Check your terminals."
+        );
+      }
+
+    } catch (err) {
+      setError("Unable to check service connections.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    checkConnections();
+  }, []);
+
+  const StatusCard = ({ title, status }) => (
+    <div className="status-card">
+      <div className="status-heading">
+        <h3>{title}</h3>
+        <span
+          className={
+            status === "connected" || status === "running"
+              ? "status-dot online"
+              : "status-dot offline"
+          }
+        />
+      </div>
+
+      <p className="status-value">
+        {status || "Not connected"}
+      </p>
+    </div>
+  );
+
+  const databaseStatus =
+    backend?.databases || {};
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <main className="app-container">
+
+      <header className="navbar">
+        <div className="brand">
+          <span className="brand-icon">M</span>
+          <div>
+            <h2>MediSense</h2>
+            <p>Healthcare Intelligence Platform</p>
+          </div>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
+
+        <span className="environment">
+          DEVELOPMENT
+        </span>
+      </header>
+
+      <section className="hero">
+        <span className="eyebrow">
+          SYSTEM INITIALIZATION
+        </span>
+
+        <h1>
+          Welcome to <span>MediSense</span>
+        </h1>
+
+        <p>
+          Building an intelligent healthcare platform
+          powered by AI, data analytics and modern
+          web technologies.
+        </p>
+
         <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+          onClick={checkConnections}
+          disabled={loading}
         >
-          Count is {count}
+          {loading ? "Checking..." : "Check Connections"}
         </button>
       </section>
 
-      <div className="ticks"></div>
+      <section className="connection-section">
+        <h2>Service Connections</h2>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+        <p className="section-description">
+          Monitor the availability of MediSense
+          application services.
+        </p>
+
+        <div className="status-grid">
+
+          <StatusCard
+            title="Node.js Backend"
+            status={backend?.backend === "running"
+              ? "connected"
+              : null}
+          />
+
+          <StatusCard
+            title="PostgreSQL"
+            status={databaseStatus.postgresql}
+          />
+
+          <StatusCard
+            title="MongoDB"
+            status={databaseStatus.mongodb}
+          />
+
+          <StatusCard
+            title="Flask AI Service"
+            status={aiService?.status}
+          />
+
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
+
+        {error && (
+          <p className="error-message" role="alert">
+            {error}
+          </p>
+        )}
+
+        {!loading && backend && (
+          <p className="system-status">
+            Backend: {backend.success
+              ? "All databases connected"
+              : "Database connection needs attention"}
+          </p>
+        )}
       </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <footer>
+        MediSense © 2026 | AI Healthcare
+        Intelligence Platform
+      </footer>
+
+    </main>
+  );
 }
 
-export default App
+export default App;

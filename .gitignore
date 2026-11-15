@@ -1,0 +1,33 @@
+
+# Node
+node_modules/
+frontend/dist/
+backend/node_modules/
+
+# Python
+ai-service/venv/
+ai-service/__pycache__/
+*.pyc
+.pytest_cache/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+backend/.env
+ai-service/.env
+
+# Generated model files
+*.pkl
+*.joblib
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

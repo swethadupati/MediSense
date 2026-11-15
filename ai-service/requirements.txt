@@ -1,0 +1,7 @@
+Flask
+numpy
+pandas
+scikit-learn
+joblib
+python-dotenv
+pytest
